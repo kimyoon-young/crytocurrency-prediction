@@ -49,7 +49,7 @@ original_df = pd.read_csv(dfp).loc[:, columns]
 print(original_df.head())
 
 
-file_name = 'bitcoin2015to2017_close.h5'
+file_name = 'bitcoin2015to2017_close_16_2.h5'
 
 
 # 최소/최대값이 각각 1,0 이 되도록 스케일링
@@ -68,7 +68,7 @@ time_stamps = np.array(time_stamps)[:, None, None]
 
 # Make samples of temporal sequences of pricing data (channel)
 # 256 x 2 hours = 512 / 24 hours -> 약 21일
-NPS, NFS = 256, 16  # Number of past and future samples
+NPS, NFS = 16, 2  # Number of past and future samples
 ps = PastSampler(NPS, NFS, sliding_window=False)
 B, Y = ps.transform(A)
 input_times, output_times = ps.transform(time_stamps)

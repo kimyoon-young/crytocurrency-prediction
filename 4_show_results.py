@@ -25,7 +25,7 @@ os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
-with h5py.File(''.join(['bitcoin2015to2017_close.h5']), 'r') as hf:
+with h5py.File(''.join(['bitcoin2015to2017_close_16_2.h5']), 'r') as hf:
     datas = hf['inputs'].value
     labels = hf['outputs'].value
     input_times = hf['input_times'].value
@@ -55,11 +55,11 @@ nb_features = datas.shape[2]
 model = Sequential()
 
 # 2 layers
-model.add(Conv1D(activation='relu', input_shape=(step_size, nb_features), strides=3, filters=8, kernel_size=20))
-# model.add(LeakyReLU())
+model.add(Conv1D(activation='relu', input_shape=(step_size, nb_features), strides=1, filters=16, kernel_size=8))
+#model.add(LeakyReLU())
 model.add(Dropout(0.25))
-model.add(Conv1D(strides=4, filters=nb_features, kernel_size=16))
-model.load_weights('weights/bitcoin2015to2017_close_CNN_2_relu-97-0.00104.hdf5')
+model.add(Conv1D(strides=1, filters=nb_features, kernel_size=8))
+model.load_weights('weights/bitcoin2015to2017_close_CNN_2_relu_16_2-98-0.00003.hdf5')
 model.compile(loss='mse', optimizer='adam')
 
 
@@ -90,12 +90,17 @@ prediction_df = pd.DataFrame()
 prediction_df['times'] = validation_output_times
 prediction_df['value'] = predicted_inverted
 
-prediction_df = prediction_df.loc[(prediction_df["times"].dt.year == 2017 )&(prediction_df["times"].dt.month > 7 ),: ]
-ground_true_df = ground_true_df.loc[(ground_true_df["times"].dt.year == 2017 )&(ground_true_df["times"].dt.month > 7 ),:]
+print(prediction_df.head())
+print(ground_true_df.head())
+
+#prediction_df = prediction_df.loc[(prediction_df["times"].dt.year == 2017 )&(prediction_df["times"].dt.month > 7 ),: ]
+#ground_true_df = ground_true_df.loc[(ground_true_df["times"].dt.year == 2017 )&(ground_true_df["times"].dt.month > 7 ),:]
+
 
 
 plt.figure(figsize=(20,10))
 plt.plot(ground_true_df.times,ground_true_df.value, label = 'Actual')
 plt.plot(prediction_df.times,prediction_df.value,'ro', label='Predicted')
 plt.legend(loc='upper left')
+plt.title('relu_16_2-98-0.00003-kernel16')
 plt.show()

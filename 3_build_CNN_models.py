@@ -21,12 +21,12 @@ config.gpu_options.allow_growth = True
 set_session(tf.Session(config=config))
 
 
-with h5py.File(''.join(['bitcoin2015to2017_close.h5']), 'r') as hf:
+with h5py.File(''.join(['bitcoin2015to2017_close_16_2.h5']), 'r') as hf:
     datas = hf['inputs'].value
     labels = hf['outputs'].value
 
 
-output_file_name='bitcoin2015to2017_close_CNN_2_relu'
+output_file_name='bitcoin2015to2017_close_CNN_2_relu_16_2'
 
 step_size = datas.shape[1]
 batch_size= 8
@@ -46,9 +46,9 @@ validation_labels = labels[training_size:,:]
 model = Sequential()
 
 
-model.add(Conv1D(activation='relu', input_shape=(step_size, nb_features), strides=3, filters=8, kernel_size=20))
+model.add(Conv1D(activation='relu', input_shape=(step_size, nb_features), strides=1, filters=16, kernel_size=8))
 model.add(Dropout(0.5))
-model.add(Conv1D( strides=4, filters=nb_features, kernel_size=16))
+model.add(Conv1D( strides=1, filters=nb_features, kernel_size=8))
 
 '''
 # 3 Layers

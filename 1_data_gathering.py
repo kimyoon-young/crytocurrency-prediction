@@ -17,7 +17,7 @@ import urllib.request
 
 # connect to poloniex's API
 # 2015-02-29일부터 시작
-url = 'https://poloniex.com/public?command=returnChartData&currencyPair=USDT_ETH&start=1424368800&end=9999999999&period=7200'
+url = 'https://poloniex.com/public?command=returnChartData&currencyPair=USDT_BTC&start=1424368800&end=9999999999&period=7200'
 
 # parse json returned from the API to Pandas DF
 openUrl = urllib.request.urlopen(url)
