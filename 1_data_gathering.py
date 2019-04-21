@@ -14,17 +14,36 @@ import numpy as np
 import os
 import pandas as pd
 import urllib.request
+import time
 
 # connect to poloniex's API
 # 2015-02-29일부터 시작
-url = 'https://poloniex.com/public?command=returnChartData&currencyPair=USDT_BTC&start=1424368800&end=9999999999&period=7200'
+start_index = 1424368800
+end_index = 1555862400
+# 6만개씩 더함
+interval = 6000000
+df = pd.DataFrame([])
+for index in range(start_index, end_index, interval):
 
-# parse json returned from the API to Pandas DF
-openUrl = urllib.request.urlopen(url)
-r = openUrl.read()
-openUrl.close()
-df = pd.read_json(r.decode())
+    start = index
+    end = index + interval
+    url = 'https://poloniex.com/public?command=returnChartData&currencyPair=USDT_BTC&start={}&end={}&period=300'.format(start,end)
+    #url.format(start, end)
+    # parse json returned from the API to Pandas DF
+
+    openUrl = urllib.request.urlopen(url)
+    r = openUrl.read()
+    print(r)
+    openUrl.close()
+    sep_df = pd.read_json(r.decode())
+    df = df.append(sep_df, ignore_index=True )
+
+    #break
+    time.sleep(2)
+
+
 print(df.head())
+print(df.tail())
 df['date'] = df['date'].astype(np.int64) // 1000000000
 print(df.head())
 
@@ -32,7 +51,7 @@ original_columns=[u'close', u'date', u'high', u'low', u'open']
 new_columns = ['Close','Timestamp','High','Low','Open']
 df = df.loc[:,original_columns]
 df.columns = new_columns
-print(df.head())
-df.to_csv('data/bitcoin2015to2017.csv',index=None)
+print(df.tail())
+df.to_csv('data/bitcoin2015to2019_5m.csv',index=None)
 
 # 일단은 이상태로 진행
