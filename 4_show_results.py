@@ -1,7 +1,7 @@
 from keras import applications
 from keras.models import Sequential
 from keras.models import Model
-from keras.layers import Dropout, Flatten, Dense, Activation
+from keras.layers import Dropout, Flatten, Dense, Activation, AveragePooling1D
 from keras.callbacks import CSVLogger
 import tensorflow as tf
 from scipy.ndimage import imread
@@ -19,13 +19,14 @@ from sklearn.preprocessing import MinMaxScaler
 import os
 import pandas as pd
 import matplotlib.pyplot as plt
+import datetime
 
 
 os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
-with h5py.File(''.join(['bitcoin2015to2017_close_16_2.h5']), 'r') as hf:
+with h5py.File(''.join(['bitcoin2015to2019_5m_256_16.h5']), 'r') as hf:
     datas = hf['inputs'].value
     labels = hf['outputs'].value
     input_times = hf['input_times'].value
@@ -49,18 +50,74 @@ validation_output_times = output_times[training_size:, :, :]
 ground_true = np.append(validation_original_inputs, validation_original_outputs, axis=1)
 ground_true_times = np.append(validation_input_times, validation_output_times, axis=1)
 step_size = datas.shape[1]
-batch_size = 8
+#batch_size = 8
 nb_features = datas.shape[2]
 
 model = Sequential()
 
-# 2 layers
-model.add(Conv1D(activation='relu', input_shape=(step_size, nb_features), strides=1, filters=16, kernel_size=8))
+
+model.add(Conv1D(activation='relu', input_shape=(step_size, nb_features), strides=1, filters=16, kernel_size=64))
 #model.add(LeakyReLU())
-model.add(Dropout(0.25))
-model.add(Conv1D(strides=1, filters=nb_features, kernel_size=8))
-model.load_weights('weights/bitcoin2015to2017_close_CNN_2_relu_16_2-98-0.00003.hdf5')
+#model.add(Dropout(0.5))
+#
+#model.add(AveragePooling1D(pool_size=2, strides=None, padding='valid', data_format='channels_last'))
+
+model.add(Conv1D(activation='relu', strides=2, filters=16, kernel_size=64))
+#model.add(AveragePooling1D(pool_size=2, strides=None, padding='valid', data_format='channels_last'))
+
+#model.add(LeakyReLU())
+#model.add(Dropout(0.5))
+model.add(Conv1D( strides=2, filters=nb_features, kernel_size=34))
+
+
+# model.add(Conv1D(activation='relu', input_shape=(step_size, nb_features), strides=3, filters=8, kernel_size=20))
+# #model.add(PReLU())
+# model.add(Dropout(0.5))
+# model.add(Conv1D( strides=4, filters=nb_features, kernel_size=16))
+
+
+# model.add(Conv1D(activation='relu', input_shape=(step_size, nb_features), strides=3, filters=16, kernel_size=8))
+# #model.add(LeakyReLU())
+# #model.add(Dropout(0.5))
+# model.add(Conv1D(activation='relu', strides=2, filters=16, kernel_size=8))
+# #model.add(LeakyReLU())
+# #model.add(Dropout(0.5))
+# model.add(Conv1D( strides=2, filters=nb_features, kernel_size=8))
+
+# 2 layers
+# model.add(Conv1D(activation='relu', input_shape=(step_size, nb_features), strides=3, filters=16, kernel_size=20))
+# model.add(Dropout(0.5))
+# model.add(Conv1D( strides=4, filters=nb_features, kernel_size=16))
+#
+# model.load_weights('weights/bitcoin2015to2019_5m_close_CNN_2_relu_256_16-100-0.00004.hdf5')
+# model.compile(loss='mse', optimizer='adam')
+
+# 3 layers
+
+# model.add(Conv1D(activation='relu', input_shape=(step_size, nb_features), strides=3, filters=8, kernel_size=8))
+# #model.add(LeakyReLU())
+# model.add(Dropout(0.5))
+# model.add(Conv1D(activation='relu', strides=2, filters=8, kernel_size=8))
+# #model.add(LeakyReLU())
+# model.add(Dropout(0.5))
+# model.add(Conv1D( strides=2, filters=nb_features, kernel_size=8))
+#
+
+
+model.load_weights('weights/bitcoin2015to2019_5m_close_CNN_3_relu_256_16-768-0.70349.hdf5')
 model.compile(loss='mse', optimizer='adam')
+
+
+# model.add(Conv1D(activation='relu', input_shape=(step_size, nb_features), strides=1, filters=8, kernel_size=33))
+# #model.add(LeakyReLU())
+# model.add(Dropout(0.5))
+# model.add(Conv1D(activation='relu', strides=1, filters=8, kernel_size=33))
+# #model.add(AveragePooling1D(pool_size=2, strides=None, padding='valid', data_format='channels_last'))
+# #model.add(LeakyReLU())
+#
+# model.add(Dropout(0.5))
+# model.add(Conv1D( strides=1, filters=nb_features, kernel_size=33))
+
 
 
 # 스케일링된 가격을 원래대로 돌림
@@ -90,17 +147,36 @@ prediction_df = pd.DataFrame()
 prediction_df['times'] = validation_output_times
 prediction_df['value'] = predicted_inverted
 
-print(prediction_df.head())
-print(ground_true_df.head())
+print('--정답--')
+print(ground_true_df.tail())
+print('--예측값--')
+print(prediction_df.tail())
 
+
+
+#print(ground_true_df.loc[:300])
+#print(prediction_df.loc[:300])
+
+ground_true_df = ground_true_df.drop_duplicates(['times'])
+
+#print(ground_true_df.loc[:300])
 #prediction_df = prediction_df.loc[(prediction_df["times"].dt.year == 2017 )&(prediction_df["times"].dt.month > 7 ),: ]
 #ground_true_df = ground_true_df.loc[(ground_true_df["times"].dt.year == 2017 )&(ground_true_df["times"].dt.month > 7 ),:]
 
-
+from sklearn.metrics import mean_squared_error
+from math import sqrt
+mse = mean_squared_error(validation_original_outputs[:,:,0].reshape(-1),predicted_inverted)
+rmse = sqrt(mse)
+print(rmse)
 
 plt.figure(figsize=(20,10))
 plt.plot(ground_true_df.times,ground_true_df.value, label = 'Actual')
 plt.plot(prediction_df.times,prediction_df.value,'ro', label='Predicted')
 plt.legend(loc='upper left')
-plt.title('relu_16_2-98-0.00003-kernel16')
+
+plt_name = 'xbitcoin2015to2019_5m_close_CNN_3_relu_256_16-95-0.00025_rmse : ' + str(rmse)
+plt.title(plt_name)
+plt.savefig(plt_name + '.png')
 plt.show()
+
+
